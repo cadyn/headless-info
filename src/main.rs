@@ -1,10 +1,15 @@
 #[macro_use] extern crate rocket;
 
 use std::collections::HashMap;
-use std::sync::RwLock;
+use std::sync::{Arc,RwLock};
 use rocket::State;
 use rocket::serde::{Deserialize, Serialize};
 use rocket::serde::json::Json;
+use rocket::fairing::AdHoc;
+
+struct WebhookUrl {
+    url: Arc<String>
+}
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 #[serde(crate = "rocket::serde")]
@@ -113,20 +118,22 @@ async fn update(data: Json<PlayerList>, listholder: &State<PlayerListHolder>, pf
 }
 
 #[post("/userjoin", format = "json", data="<player>")]
-async fn userjoin(player: Json<Player>) {
+async fn userjoin(player: Json<Player>, webhookurl: &State<WebhookUrl>) {
+    let url = (webhookurl.url.clone());
     let message = DiscordWebhookMessage::newjoin(&player.username);
     let client = reqwest::Client::new();
-    let res = client.post("https://discord.com/api/webhooks/1163368908972113922/ciq-3OLrcyBRLde0pAbcjAlB_UivBdYGrgCfNx8aWpkOMhOiwFbUDKaEsWRaCA7rhjZs")
+    let res = client.post(&*url)
     .json(&message)
     .send()
     .await.unwrap();
 }
 
 #[post("/userleave", format = "json", data="<player>")]
-async fn userleave(player: Json<Player>) {
+async fn userleave(player: Json<Player>, webhookurl: &State<WebhookUrl>) {
+    let url = (webhookurl.url.clone());
     let message = DiscordWebhookMessage::newleave(&player.username);
     let client = reqwest::Client::new();
-    let res = client.post("https://discord.com/api/webhooks/1163368908972113922/ciq-3OLrcyBRLde0pAbcjAlB_UivBdYGrgCfNx8aWpkOMhOiwFbUDKaEsWRaCA7rhjZs")
+    let res = client.post(&*url)
     .json(&message)
     .send()
     .await.unwrap();
@@ -134,11 +141,16 @@ async fn userleave(player: Json<Player>) {
 
 #[launch]
 fn rocket() -> _ {
-    rocket::build()
-    .mount("/", routes![update])
+    let rocket = rocket::build();
+    let figment = rocket.figment();
+
+    let webhookurl: String = figment.extract_inner("webhook").expect("webhook");
+
+    rocket.mount("/", routes![update])
     .mount("/", routes![list])
     .mount("/", routes![userjoin])
     .mount("/", routes![userleave])
     .manage(PlayerListHolder { playerlist: RwLock::new(PlayerList {list: Vec::new()})})
     .manage(PlayerPfpMap { map: RwLock::new(HashMap::<String,String>::new())})
+    .manage(WebhookUrl { url: Arc::new(webhookurl)})
 }
