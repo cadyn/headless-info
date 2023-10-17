@@ -85,7 +85,7 @@ struct Player {
 #[get("/")]
 fn root(listholder: &State<PlayerListHolder>) -> RawHtml<String>{
     let list = listholder.playerlist.read().unwrap();
-    let mut output = "<!DOCTYPE html>\n<html>\n<head>\n<style>\nbody {background-color: black;}\ntable {\n h1, h2 {color: blue;}\n border-collapse: collapse;\n width: 40%;\n}\n\nth, td {\n border-left:2px solid MidnightBlue;\n border-right:2px solid MidnightBlue;\n border-bottom: 2px solid MidnightBlue;\n text-align: center;\n}\n</style>\n</head>\n<body>\n<h1 style=\"text-align: center; color: blue;\">Headless server users</h1>\n<table style=\"margin-left: auto; margin-right: auto;\">\n<tbody>\n<tr>\n<td><h2>Profile Picture</h2></td>\n<td><h2>Username</h2></td>\n<td><h2>Time since join</h2></td>\n</tr>\n".to_string();
+    let mut output = "<!DOCTYPE html>\n<html>\n<head>\n<style>\nbody {background-color: black;}\nh1, h2 {color: blue;}\ntable {\n border-collapse: collapse;\n width: 40%;\n}\n\nth, td {\n border-left:2px solid MidnightBlue;\n border-right:2px solid MidnightBlue;\n border-bottom: 2px solid MidnightBlue;\n text-align: center;\n}\n</style>\n</head>\n<body>\n<h1 style=\"text-align: center; color: blue;\">Headless server users</h1>\n<table style=\"margin-left: auto; margin-right: auto;\">\n<tbody>\n<tr>\n<td><h2>Profile Picture</h2></td>\n<td><h2>Username</h2></td>\n<td><h2>Time since join</h2></td>\n</tr>\n".to_string();
     for player in list.list.iter() {
         output += "<tr>\n";
         output += &format!("<td><img src=\"{}\" width=\"64\" height=\"64\" /></td>\n",player.pfp.as_ref().expect("fuck"));
