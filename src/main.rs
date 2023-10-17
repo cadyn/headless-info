@@ -5,6 +5,8 @@ use std::sync::{Arc,RwLock};
 use rocket::State;
 use rocket::serde::{Deserialize, Serialize};
 use rocket::serde::json::Json;
+use rocket::response::content::RawHtml;
+use chrono::{DateTime, Utc};
 
 struct WebhookUrl {
     url: Arc<String>
@@ -76,8 +78,29 @@ struct PlayerList {
 struct Player {
     username: String,
     userid: String,
-    jointime: u64,
+    jointime: i64,
     pfp: Option<String>,
+}
+
+#[get("/")]
+fn root(listholder: &State<PlayerListHolder>) -> RawHtml<String>{
+    let list = listholder.playerlist.read().unwrap();
+    let mut output = "<!DOCTYPE html>\n<html>\n<head>\n<style>\nbody {background-color: black;}\ntable {\n h1, h2 {color: blue;}\n border-collapse: collapse;\n width: 40%;\n}\n\nth, td {\n border-left:2px solid MidnightBlue;\n border-right:2px solid MidnightBlue;\n border-bottom: 2px solid MidnightBlue;\n text-align: center;\n}\n</style>\n</head>\n<body>\n<h1 style=\"text-align: center; color: blue;\">Headless server users</h1>\n<table style=\"margin-left: auto; margin-right: auto;\">\n<tbody>\n<tr>\n<td><h2>Profile Picture</h2></td>\n<td><h2>Username</h2></td>\n<td><h2>Time since join</h2></td>\n</tr>\n".to_string();
+    for player in list.list.iter() {
+        output += "<tr>\n";
+        output += &format!("<td><img src=\"{}\" width=\"64\" height=\"64\" /></td>\n",player.pfp.as_ref().expect("fuck"));
+        output += &format!("<td><h1>{}</h1></td>\n",player.username);
+        let now = Utc::now();
+        let joindt: DateTime<Utc> = DateTime::from_timestamp(player.jointime,0u32).expect("timestamp fail????");
+        let duration = (now - joindt).to_std().expect("duration conversion");
+        let seconds = duration.as_secs() % 60;
+        let minutes = (duration.as_secs() / 60) % 60;
+        let hours = (duration.as_secs() / 60) / 60;
+        output += &format!("<td><h2 class=\"duration\" data-timejoined={}>{}:{}:{}</h2></td>\n",player.jointime,hours,minutes,seconds);
+        output += "</tr>\n";
+    }
+    output += "</tbody>\n</table>\n<script>\nconst collection = document.getElementsByClassName(\"duration\");\n\nsetInterval(function () {\nfor (let i = 0; i < collection.length; i++) {\n  let time = collection[i].dataset.timejoined;\n  let duration = Math.floor((Date.now() - (time*1000))/1000);\n  let seconds = duration % 60;\n  let minutes = Math.floor(duration / 60) % 60;\n  let hours = Math.floor(Math.floor(duration / 60) / 60);\n  let output = `${hours}:${minutes}:${seconds}`;\n  collection[i].innerHTML = output;\n}\n}, 1000);\n\nsetTimeout(function(){\n   window.location.reload();\n}, 60000);\n</script>\n</body>\n</html>";
+    return RawHtml(output);
 }
 
 #[get("/list")]
@@ -146,6 +169,7 @@ fn rocket() -> _ {
     let webhookurl: String = figment.extract_inner("webhook").expect("webhook");
 
     rocket.mount("/", routes![update])
+    .mount("/", routes![root])
     .mount("/", routes![list])
     .mount("/", routes![userjoin])
     .mount("/", routes![userleave])
