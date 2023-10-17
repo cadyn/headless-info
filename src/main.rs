@@ -99,7 +99,7 @@ fn root(listholder: &State<PlayerListHolder>) -> RawHtml<String>{
         output += &format!("<td><h2 class=\"duration\" data-timejoined={}>{}:{}:{}</h2></td>\n",player.jointime,hours,minutes,seconds);
         output += "</tr>\n";
     }
-    output += "</tbody>\n</table>\n<script>\nconst collection = document.getElementsByClassName(\"duration\");\n\nsetInterval(function () {\nfor (let i = 0; i < collection.length; i++) {\n  let time = collection[i].dataset.timejoined;\n  let duration = Math.floor((Date.now() - (time*1000))/1000);\n  let seconds = duration % 60;\n  let minutes = Math.floor(duration / 60) % 60;\n  let hours = Math.floor(Math.floor(duration / 60) / 60);\n  let output = `${hours}:${minutes}:${seconds}`;\n  collection[i].innerHTML = output;\n}\n}, 1000);\n\nsetTimeout(function(){\n   window.location.reload();\n}, 60000);\n</script>\n</body>\n</html>";
+    output += "</tbody>\n</table>\n<script>\nconst collection = document.getElementsByClassName(\"duration\");\n\nsetInterval(function () {\nfor (let i = 0; i < collection.length; i++) {\n  let time = collection[i].dataset.timejoined;\n  let duration = Math.floor((Date.now() - (time*1000))/1000);\n  let seconds = duration % 60;\n  let minutes = Math.floor(duration / 60) % 60;\n  let hours = Math.floor(Math.floor(duration / 60) / 60);\n  let output = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;\n  collection[i].innerHTML = output;\n}\n}, 1000);\n\nsetTimeout(function(){\n   window.location.reload();\n}, 60000);\n</script>\n</body>\n</html>";
     return RawHtml(output);
 }
 
