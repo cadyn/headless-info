@@ -5,7 +5,6 @@ use std::sync::{Arc,RwLock};
 use rocket::State;
 use rocket::serde::{Deserialize, Serialize};
 use rocket::serde::json::Json;
-use rocket::fairing::AdHoc;
 
 struct WebhookUrl {
     url: Arc<String>
@@ -119,10 +118,10 @@ async fn update(data: Json<PlayerList>, listholder: &State<PlayerListHolder>, pf
 
 #[post("/userjoin", format = "json", data="<player>")]
 async fn userjoin(player: Json<Player>, webhookurl: &State<WebhookUrl>) {
-    let url = (webhookurl.url.clone());
+    let url = webhookurl.url.clone();
     let message = DiscordWebhookMessage::newjoin(&player.username);
     let client = reqwest::Client::new();
-    let res = client.post(&*url)
+    let _res = client.post(&*url)
     .json(&message)
     .send()
     .await.unwrap();
@@ -130,10 +129,10 @@ async fn userjoin(player: Json<Player>, webhookurl: &State<WebhookUrl>) {
 
 #[post("/userleave", format = "json", data="<player>")]
 async fn userleave(player: Json<Player>, webhookurl: &State<WebhookUrl>) {
-    let url = (webhookurl.url.clone());
+    let url = webhookurl.url.clone();
     let message = DiscordWebhookMessage::newleave(&player.username);
     let client = reqwest::Client::new();
-    let res = client.post(&*url)
+    let _res = client.post(&*url)
     .json(&message)
     .send()
     .await.unwrap();
