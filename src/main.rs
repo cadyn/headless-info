@@ -88,7 +88,8 @@ fn root(listholder: &State<PlayerListHolder>) -> RawHtml<String>{
     let mut output = "<!DOCTYPE html>\n<html>\n<head>\n<style>\nbody {background-color: black;}\nh1, h2 {color: blue;}\ntable {\n border-collapse: collapse;\n width: 40%;\n}\n\nth, td {\n border-left:2px solid MidnightBlue;\n border-right:2px solid MidnightBlue;\n border-bottom: 2px solid MidnightBlue;\n text-align: center;\n}\n</style>\n</head>\n<body>\n<h1 style=\"text-align: center; color: blue;\">Headless server users</h1>\n<table style=\"margin-left: auto; margin-right: auto;\">\n<tbody>\n<tr>\n<td><h2>Profile Picture</h2></td>\n<td><h2>Username</h2></td>\n<td><h2>Time since join</h2></td>\n</tr>\n".to_string();
     for player in list.list.iter() {
         output += "<tr>\n";
-        output += &format!("<td><img src=\"{}\" width=\"64\" height=\"64\" /></td>\n",player.pfp.as_ref().expect("fuck"));
+        //Boykisser as default pfp lol
+        output += &format!("<td><img src=\"{}\" width=\"64\" height=\"64\" /></td>\n",player.pfp.as_ref().unwrap_or(&"https://cdn.discordapp.com/attachments/933468029797400596/1165333648652902492/original_boy_kisser_by_greenbandit2004_dfw38to-fullview.png".to_string()));
         output += &format!("<td><h1>{}</h1></td>\n",player.username);
         let now = Utc::now();
         let joindt: DateTime<Utc> = DateTime::from_timestamp(player.jointime,0u32).expect("timestamp fail????");
@@ -124,17 +125,25 @@ async fn update(data: Json<PlayerList>, listholder: &State<PlayerListHolder>, pf
         }
     }
     for i in toupdate {
-        let getpfp = reqwest::get(format!("https://api.resonite.com/users/{}",i)).await.unwrap().json::<UserResponse>().await.unwrap();
-        let mut mapwrite = pfpmap.map.write().unwrap();
-        let assetid = getpfp.profile.iconurl.split("resdb:///").last().expect("known format").split(".").next().expect("known format");
-        let asseturl = format!("https://assets.resonite.com/{}",assetid);
-        mapwrite.insert(i.to_string(),asseturl);
+        let getpfp = reqwest::get(format!("https://api.resonite.com/users/{}",i)).await.unwrap().json::<UserResponse>().await;
+        match getpfp {
+            Ok(pfp) => {
+                let mut mapwrite = pfpmap.map.write().unwrap();
+                let assetid = pfp.profile.iconurl.split("resdb:///").last().expect("known format").split(".").next().expect("known format");
+                let asseturl = format!("https://assets.resonite.com/{}",assetid);
+                mapwrite.insert(i.to_string(),asseturl);
+            }
+            Err(_) => {
+                continue;
+            }
+        }
+        
     }
 
     let mut list = listholder.playerlist.write().unwrap();
     let map = pfpmap.map.read().unwrap();
     for i in newlist.list.iter_mut() {
-        i.pfp = Some(map[&i.userid].clone());
+        i.pfp = map.get(&i.userid).cloned();
     }
     *list = newlist;
 }
