@@ -89,7 +89,7 @@ fn root(listholder: &State<PlayerListHolder>) -> RawHtml<String>{
     for player in list.list.iter() {
         output += "<tr>\n";
         //Boykisser as default pfp lol
-        output += &format!("<td><img src=\"{}\" width=\"64\" height=\"64\" /></td>\n",player.pfp.as_ref().unwrap_or(&"https://cdn.discordapp.com/attachments/933468029797400596/1165333648652902492/original_boy_kisser_by_greenbandit2004_dfw38to-fullview.png".to_string()));
+        output += &format!("<td><img src=\"{}\" width=\"64\" height=\"64\" /></td>\n",player.pfp.as_ref().unwrap_or(&"https://i.imgur.com/Zl1DcHg.png".to_string()));
         output += &format!("<td><h1>{}</h1></td>\n",player.username);
         let now = Utc::now();
         let joindt: DateTime<Utc> = DateTime::from_timestamp(player.jointime,0u32).expect("timestamp fail????");
